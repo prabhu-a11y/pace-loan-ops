@@ -61,7 +61,7 @@ export function HelpChat({ contextData, stepInfo = "Onboarding Process", onToggl
         setMessages(prev => [...prev, { role: "user", content: userMsg }]);
         setIsLoading(true);
 
-        const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const ZAMP_API_URL = import.meta.env.VITE_API_URL || "/api";
         try {
             const response = await fetch(`${ZAMP_API_URL}/chat/help`, {
                 method: "POST",

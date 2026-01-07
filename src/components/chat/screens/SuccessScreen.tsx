@@ -24,7 +24,7 @@ export function SuccessScreen({ email, referenceNumber, contextData, stepInfo, z
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Messaging & Status State
-  const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const ZAMP_API_URL = import.meta.env.VITE_API_URL || "/api";
   const [messages, setMessages] = useState<any[]>([]);
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);

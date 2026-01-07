@@ -40,7 +40,7 @@ const ReviewActions = ({ processId, messages, refresh, rejectionReasons = [], on
     const [showChat, setShowChat] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [msgText, setMsgText] = useState("");
-    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "/api";
     const [sending, setSending] = useState(false);
     const [rejectionEmail, setRejectionEmail] = useState("");
 
@@ -228,7 +228,7 @@ const ProcessDetails = () => {
     const [error, setError] = useState(null);
     const [selectedArtifact, setSelectedArtifact] = useState(null); // New: for inline artifact panel
     const [allProcessIds, setAllProcessIds] = useState([]);
-    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "/api";
     const [liveStatus, setLiveStatus] = useState(null);
 
     useEffect(() => {
@@ -466,8 +466,8 @@ const ProcessDetails = () => {
                                                                             }
                                                                         }}
                                                                         className={`px-3 py-1.5 rounded text-[10px] font-medium border transition-colors ${action.primary
-                                                                                ? 'bg-black text-white border-black hover:bg-gray-800'
-                                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                                            ? 'bg-black text-white border-black hover:bg-gray-800'
+                                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                                                                             }`}
                                                                     >
                                                                         {action.label}
