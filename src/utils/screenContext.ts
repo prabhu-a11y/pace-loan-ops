@@ -12,7 +12,7 @@ interface ScreenContext {
 export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: string; whyNeeded: string }> = {
   "0.1": {
     title: "Welcome",
-    description: "Get started with Wio Business",
+    description: "Get started with Auto Loan Ops",
     whyNeeded: "Introduction",
   },
   "1.1": {
@@ -56,14 +56,14 @@ export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: stri
     whyNeeded: "Ensures the extracted data is accurate before proceeding",
   },
   "2.1": {
-    title: "Business Type Selection",
-    description: "User is selecting whether they have a Trade License or are a Freelancer",
-    whyNeeded: "Different business types require different documentation and verification steps",
+    title: "Vehicle Selection",
+    description: "User is selecting their vehicle type",
+    whyNeeded: "Required to determine valuation parameters and loan terms",
   },
   "2.2": {
-    title: "Restricted Industries Check",
-    description: "User is confirming they are not in a restricted industry",
-    whyNeeded: "Wio Bank has regulatory restrictions on certain industries due to compliance requirements",
+    title: "Usage Intent Check",
+    description: "User is confirming vehicle usage intent (Private/Commercial)",
+    whyNeeded: "Insurance and regulatory requirements vary based on usage",
   },
   "3.1": {
     title: "Trade License Input",
@@ -89,6 +89,11 @@ export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: stri
     title: "Memorandum of Association Upload",
     description: "User is uploading their MOA document",
     whyNeeded: "Required for LLCs/FZEs/FZCOs to verify shareholder structure and ownership percentages",
+  },
+  "3.5-QA": {
+    title: "Ownership Q&A",
+    description: "User is answering ownership related questions",
+    whyNeeded: "Helps determine the final authorization requirements",
   },
   "3.6": {
     title: "Partnership Deed Upload",
@@ -140,6 +145,11 @@ export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: stri
     description: "User is entering their business website URL",
     whyNeeded: "Allows the bank to verify the online business presence",
   },
+  "5.2A": {
+    title: "Website Extraction Confirmation",
+    description: "User is confirming data extracted from their website",
+    whyNeeded: "Ensures the accuracy of the automated data extraction",
+  },
   "5.3": {
     title: "International Operations",
     description: "User is indicating if they operate outside the UAE",
@@ -164,6 +174,21 @@ export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: stri
     title: "Business Address Input",
     description: "User is entering their UAE business address",
     whyNeeded: "Required for account correspondence and business verification",
+  },
+  "5.7A": {
+    title: "Address Verification Success",
+    description: "User is informed of successful address verification",
+    whyNeeded: "Confirms that the provided address meets regulatory requirements",
+  },
+  "5.8": {
+    title: "Employer Verification",
+    description: "User is entering their employer's identification details",
+    whyNeeded: "Required to verify the user's employment status and income source",
+  },
+  "5.8A": {
+    title: "Employer Confirmation",
+    description: "User is reviewing extracted employer information",
+    whyNeeded: "Ensures the employer data is accurate for risk profiling",
   },
   "6.1": {
     title: "Annual Turnover",
@@ -224,12 +249,10 @@ export const SCREEN_CONTEXT: Record<ScreenId, { title: string; description: stri
 
 const STEP_NAMES: Record<number, string> = {
   1: "Identity Verification",
-  2: "Eligibility Check",
-  3: "Document Upload",
-  4: "Authorization",
-  5: "Business Details",
-  6: "Financial Profile",
-  7: "Review & Submit",
+  2: "Vehicle Selection",
+  3: "Valuation Assessment",
+  4: "Financial Risk Profile",
+  5: "Final Review & Submit",
 };
 
 export function getScreenContext(screenId: ScreenId): ScreenContext {
@@ -252,32 +275,18 @@ export function buildContextSummary(screenId: ScreenId, data: OnboardingData): s
 
   // Add relevant collected data based on what's been filled
   if (data.fullName) relevantData.push(`User name: ${data.fullName}`);
-  if (data.businessType) relevantData.push(`Business type: ${data.businessType === "trade_license" ? "Trade License Holder" : "Freelancer"}`);
-  if (data.tradeLicense.businessName) relevantData.push(`Business name: ${data.tradeLicense.businessName}`);
-  if (data.tradeLicense.legalType) {
-    const legalTypes: Record<string, string> = {
-      sole_proprietorship: "Sole Proprietorship",
-      partnership: "Partnership",
-      llc: "LLC",
-      fzco: "FZCO",
-      fze: "FZE",
-    };
-    relevantData.push(`Legal type: ${legalTypes[data.tradeLicense.legalType] || data.tradeLicense.legalType}`);
-  }
-  if (data.shareholders.length > 0) relevantData.push(`Shareholders: ${data.shareholders.length}`);
-  if (data.isShareholderMatch !== undefined) relevantData.push(`Applicant is shareholder: ${data.isShareholderMatch ? "Yes" : "No"}`);
-  if (data.hasInternationalOps !== null) relevantData.push(`International operations: ${data.hasInternationalOps ? "Yes" : "No"}`);
-  if (data.annualTurnover) relevantData.push(`Expected turnover: ${data.annualTurnover}`);
+  if (data.businessType) relevantData.push(`Vehicle usage: ${data.businessType === "trade_license" ? "Commercial" : "Private"}`);
+  if (data.tradeLicense.businessName) relevantData.push(`Vehicle model/Make: ${data.tradeLicense.businessName}`);
 
   return `
-CURRENT USER CONTEXT:
-- Current Step: Step ${context.stepNumber} - ${context.stepName}
-- Current Screen: ${context.screenTitle}
-- What they're doing: ${context.screenDescription}
-- Why this is needed: ${context.whyNeeded}
-
-USER PROFILE DATA:
-${relevantData.length > 0 ? relevantData.map(d => `- ${d}`).join("\n") : "- No data collected yet"}
-
-Use this context to provide personalized, relevant answers. If the user asks "why do I need this?" or similar contextual questions, explain specifically why the current step is required based on their business type and profile.`;
+  CURRENT USER CONTEXT:
+  - Current Step: Step ${context.stepNumber} - ${context.stepName}
+  - Current Screen: ${context.screenTitle}
+  - What they're doing: ${context.screenDescription}
+  - Why this is needed: ${context.whyNeeded}
+  
+  USER PROFILE DATA:
+  ${relevantData.length > 0 ? relevantData.map(d => `- ${d}`).join("\n") : "- No data collected yet"}
+  
+  Use this context to provide personalized, relevant answers. If the user asks "why do I need this?" or similar contextual questions, explain specifically why the current step is required based on their loan application profile.`;
 }

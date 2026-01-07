@@ -40,7 +40,7 @@ const ReviewActions = ({ processId, messages, refresh, rejectionReasons = [], on
     const [showChat, setShowChat] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [msgText, setMsgText] = useState("");
-    const ZAMP_API_URL = (typeof process !== 'undefined' && process.env?.VITE_API_URL) || "http://localhost:8000";
+    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
     const [sending, setSending] = useState(false);
     const [rejectionEmail, setRejectionEmail] = useState("");
 
@@ -55,7 +55,7 @@ const ReviewActions = ({ processId, messages, refresh, rejectionReasons = [], on
 
         const defaultEmail = `Dear Applicant,
 
-Thank you for your interest in opening an account with Wio Bank.
+Thank you for your interest in an auto loan with ABC Bank.
 
 After careful review of your application and supporting documents, we regret to inform you that we are unable to proceed with your account opening request at this time.
 
@@ -67,7 +67,7 @@ If you believe this decision was made in error or if you have additional documen
 We appreciate your understanding.
 
 Best regards,
-Wio Bank Onboarding Team`;
+ABC Bank Loan Ops Team`;
         setRejectionEmail(defaultEmail);
         setShowRejectModal(true);
     };
@@ -228,13 +228,13 @@ const ProcessDetails = () => {
     const [error, setError] = useState(null);
     const [selectedArtifact, setSelectedArtifact] = useState(null); // New: for inline artifact panel
     const [allProcessIds, setAllProcessIds] = useState([]);
-    const ZAMP_API_URL = (typeof process !== 'undefined' && process.env?.VITE_API_URL) || "http://localhost:8000";
+    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
     const [liveStatus, setLiveStatus] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(`/data/process_${id}.json`);
+                const response = await fetch(`${ZAMP_API_URL}/zamp/process/${id}`);
                 if (!response.ok) {
                     throw new Error('Process data not found');
                 }
@@ -428,127 +428,157 @@ const ProcessDetails = () => {
 
                 {/* Activity Timeline */}
                 <div className="flex-1 overflow-y-auto">
-                    {/* Today Divider */}
-                    <div className="flex items-center py-6 px-8">
-                        <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink mx-4 text-xs text-gray-500 font-medium">Today</span>
-                        <div className="flex-grow border-t border-gray-200"></div>
-                    </div>
+                    <div className="px-8 py-8">
+                        <div className="max-w-3xl space-y-10">
 
-                    <div className="px-8 pb-8">
-                        <div className="max-w-3xl">
-                            {logs.map((log, index) => {
-                                const isLastItem = index === logs.length - 1;
-                                const isComplete = log.status !== 'processing';
+                            {/* Needs Attention Bucket */}
+                            {logs.some(l => l.status === 'needs_attention') && (
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="h-2 w-2 rounded-full bg-red-500"></div>
+                                        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Needs Attention</h2>
+                                    </div>
+                                    <div className="space-y-6">
+                                        {logs.filter(l => l.status === 'needs_attention').map((log) => (
+                                            <div key={log.id} className="relative pl-6 border-l-2 border-red-100 pb-2">
+                                                <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></div>
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h3 className="text-xs font-medium text-gray-900 mb-1">{log.title}</h3>
+                                                        <CollapsibleReasoning reasons={log.reasoning} />
 
-                                return (
-                                    <div key={log.id} className="relative pb-12">
-                                        <div className="relative flex gap-4">
-                                            {/* Time */}
-                                            <div className="w-20 flex-shrink-0 text-right">
-                                                <span className="text-xs text-gray-500">{log.time}</span>
-                                            </div>
+                                                        {/* HITL Options */}
+                                                        {log.hitlActions && (
+                                                            <div className="flex flex-wrap gap-2 mt-3">
+                                                                {log.hitlActions.map((action, i) => (
+                                                                    <button
+                                                                        key={i}
+                                                                        onClick={async () => {
+                                                                            if (window.confirm(`${action.label}?`)) {
+                                                                                try {
+                                                                                    await fetch(`${ZAMP_API_URL}/zamp/hitl-action`, {
+                                                                                        method: 'POST',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify({ processId: id, actionId: action.id, logId: log.id })
+                                                                                    });
+                                                                                    window.location.reload();
+                                                                                } catch (e) { console.error(e); }
+                                                                            }
+                                                                        }}
+                                                                        className={`px-3 py-1.5 rounded text-[10px] font-medium border transition-colors ${action.primary
+                                                                                ? 'bg-black text-white border-black hover:bg-gray-800'
+                                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                                            }`}
+                                                                    >
+                                                                        {action.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
 
-                                            {/* Timeline Icon */}
-                                            <div className="relative flex flex-col items-center">
-                                                <div className="relative z-10 bg-white">
-                                                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-2 w-2 mt-1">
-                                                        <rect x="0.75" y="0.75" width="6.5" height="6.5" rx="2"
-                                                            className={isComplete ? "fill-green-100 stroke-green-700" : "fill-blue-100 stroke-blue-700"}
-                                                            strokeWidth="1.5" />
-                                                    </svg>
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            {log.artifacts?.map(art => {
+                                                                const Icon = getIconComponent(art.icon);
+                                                                return (
+                                                                    <button key={art.id} onClick={() => handleArtifactClick(art)} className="inline-flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-red-50 text-red-700 border border-red-100 hover:bg-red-100">
+                                                                        <Icon className="h-3 w-3" />
+                                                                        <span>{art.label}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-400 font-medium">{log.time}</span>
                                                 </div>
-                                                {!isLastItem && (
-                                                    <div className="absolute top-3 left-1/2 -translate-x-1/2 w-px bg-gray-200" style={{ height: 'calc(100% + 5rem)' }}></div>
-                                                )}
                                             </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0 -mt-0.5">
-                                                <h3 className="text-xs font-normal text-gray-900 mb-2">{log.title}</h3>
-
-                                                {/* Reasoning Section */}
-                                                <CollapsibleReasoning reasons={log.reasoning} />
-
-                                                {/* Artifacts */}
-                                                {log.artifacts && log.artifacts.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {log.artifacts.map((artifact) => {
-                                                            const IconComponent = getIconComponent(artifact.icon);
+                            {/* In Progress Bucket */}
+                            <section className="space-y-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">In Progress</h2>
+                                </div>
+                                <div className="space-y-6">
+                                    {logs.filter(l => l.status === 'processing' || l.status === 'In Progress').map((log) => (
+                                        <div key={log.id} className="relative pl-6 border-l-2 border-blue-100 pb-2">
+                                            <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-blue-500 border-2 border-white"></div>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="text-xs font-normal text-gray-900 mb-1">{log.title}</h3>
+                                                    <CollapsibleReasoning reasons={log.reasoning} />
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        {log.artifacts?.map(art => {
+                                                            const Icon = getIconComponent(art.icon);
                                                             return (
-                                                                <button
-                                                                    key={artifact.id}
-                                                                    onClick={() => handleArtifactClick(artifact)}
-                                                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
-                                                                >
-                                                                    <IconComponent className="h-3.5 w-3.5 text-gray-400" />
-                                                                    <span>{artifact.label}</span>
-                                                                    {artifact.icon === 'dashboard' && (
-                                                                        <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                        </svg>
-                                                                    )}
+                                                                <button key={art.id} onClick={() => handleArtifactClick(art)} className="inline-flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100">
+                                                                    <Icon className="h-3 w-3" />
+                                                                    <span>{art.label}</span>
                                                                 </button>
                                                             );
                                                         })}
                                                     </div>
-                                                )}
+                                                </div>
+                                                <span className="text-[10px] text-gray-400 font-medium">{log.time}</span>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-
-                            {/* Review Decision Entry - Integrated into Timeline */}
-                            {(processStatus === 'Needs Review' || processStatus === 'Under Review') && (
-                                <div className="relative pb-12">
-                                    <div className="relative flex gap-4">
-                                        {/* Time */}
-                                        <div className="w-20 flex-shrink-0 text-right">
-                                            <span className="text-xs text-gray-500">Now</span>
-                                        </div>
-
-                                        {/* Timeline Icon - Orange diamond for pending decision */}
-                                        <div className="relative flex flex-col items-center">
-                                            {/* Connector line from above */}
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-px bg-gray-200" style={{ height: '5rem' }}></div>
-                                            <div className="relative z-10 bg-white">
-                                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 mt-1" style={{ transform: 'rotate(45deg)' }}>
-                                                    <rect x="1" y="1" width="8" height="8" rx="1" className="fill-orange-100 stroke-orange-500" strokeWidth="1.5" />
-                                                </svg>
+                                    ))}
+                                    {/* Fallback for Manual Review if status is pending */}
+                                    {(processStatus === 'Needs Review' || processStatus === 'Under Review') && (
+                                        <div className="relative pl-6 border-l-2 border-orange-100 pb-2">
+                                            <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-orange-500 border-2 border-white"></div>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="text-xs font-medium text-gray-900 mb-2">Final Operations Review</h3>
+                                                    <ReviewActions
+                                                        processId={id}
+                                                        messages={sections?.messages?.items || []}
+                                                        refresh={Math.random()}
+                                                        onArtifactClick={handleArtifactClick}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0 -mt-0.5">
-                                            <h3 className="text-xs font-medium text-gray-900 mb-2">Manual Review Required</h3>
-
-                                            {/* Reasoning Section */}
-                                            <CollapsibleReasoning reasons={[
-                                                "Application flagged for human verification",
-                                                "All automated checks completed successfully",
-                                                "KYC/AML review recommended before final approval",
-                                                "Verify shareholder information matches submitted documents",
-                                                "Confirm business activities align with stated purpose"
-                                            ]} />
-
-                                            {/* Decision Actions */}
-                                            <div className="mt-4">
-                                                <ReviewActions
-                                                    processId={id}
-                                                    messages={sections?.messages?.items || []}
-                                                    refresh={Math.random()}
-                                                    rejectionReasons={[
-                                                        // These would typically come from detected issues
-                                                        // Empty array = no issues detected, prompts user input
-                                                    ]}
-                                                    onArtifactClick={handleArtifactClick}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            )}
+                            </section>
+
+                            {/* Done Bucket */}
+                            <section className="space-y-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Done</h2>
+                                </div>
+                                <div className="space-y-6">
+                                    {logs.filter(l => l.status === 'success' || l.status === 'completed' || l.status === 'Done').reverse().map((log) => (
+                                        <div key={log.id} className="relative pl-6 border-l-2 border-green-100 pb-2">
+                                            <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-green-500 border-2 border-white"></div>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="text-xs font-normal text-gray-600 mb-1">{log.title}</h3>
+                                                    <CollapsibleReasoning reasons={log.reasoning} />
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        {log.artifacts?.map(art => {
+                                                            const Icon = getIconComponent(art.icon);
+                                                            return (
+                                                                <button key={art.id} onClick={() => handleArtifactClick(art)} className="inline-flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100">
+                                                                    <Icon className="h-3 w-3" />
+                                                                    <span>{art.label}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-gray-400">{log.time}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
                         </div>
                     </div>
                 </div>
@@ -568,21 +598,20 @@ const ProcessDetails = () => {
                                 <Maximize2 className="h-4 w-4 text-gray-500" />
                             </button>
                         </div>
-
                         {/* Case Details Section */}
                         <div className="mb-5">
                             <h3 className="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wider">Case Details</h3>
                             <div className="space-y-2.5 text-xs">
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Application ID</span>
-                                    <span className="text-gray-900 font-medium">WIO-{id}</span>
+                                    <span className="text-gray-900 font-medium">ABC-{id}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Customer Name</span>
+                                    <span className="text-gray-500">Borrower Name</span>
                                     <span className="text-gray-900 font-medium">{customerName || "—"}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Entity Name</span>
+                                    <span className="text-gray-500">Vehicle Entity</span>
                                     <span className="text-gray-900 font-medium">{entityName || "—"}</span>
                                 </div>
                                 <div className="flex justify-between">
@@ -600,35 +629,38 @@ const ProcessDetails = () => {
 
                         {/* Divider */}
                         <div className="border-t border-gray-200 my-5"></div>
+                        <div className="border-t border-gray-200 my-5"></div>
 
                         {/* Dynamic Extra Details */}
-                        {keyDetailItems.length > 0 && (
-                            <div className="mb-5">
-                                <h3 className="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wider">Additional Information</h3>
-                                <div className="space-y-2.5 text-xs">
-                                    {keyDetailItems.flatMap((item, itemIdx) =>
-                                        Object.entries(item).map(([key, value], entryIdx) => {
-                                            // Skip fields already shown in the top section or internal fields
-                                            if (['customerName', 'entityName', 'processingDate', 'status', 'id', 'title'].includes(key)) return null;
+                        {
+                            keyDetailItems.length > 0 && (
+                                <div className="mb-5">
+                                    <h3 className="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wider">Additional Information</h3>
+                                    <div className="space-y-2.5 text-xs">
+                                        {keyDetailItems.flatMap((item, itemIdx) =>
+                                            Object.entries(item).map(([key, value], entryIdx) => {
+                                                // Skip fields already shown in the top section or internal fields
+                                                if (['customerName', 'entityName', 'processingDate', 'status', 'id', 'title'].includes(key)) return null;
 
-                                            // Format key: camelCase to Title Case
-                                            const label = key
-                                                .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-                                                .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
-                                                .trim();
+                                                // Format key: camelCase to Title Case
+                                                const label = key
+                                                    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+                                                    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+                                                    .trim();
 
-                                            return (
-                                                <div key={`${itemIdx}-${entryIdx}`} className="flex justify-between">
-                                                    <span className="text-gray-500 capitalize">{label}</span>
-                                                    <span className="text-gray-900 font-medium text-right ml-4 break-words max-w-[200px]">{value}</span>
-                                                </div>
-                                            );
-                                        })
-                                    )}
+                                                return (
+                                                    <div key={`${itemIdx}-${entryIdx}`} className="flex justify-between">
+                                                        <span className="text-gray-500 capitalize">{label}</span>
+                                                        <span className="text-gray-900 font-medium text-right ml-4 break-words max-w-[200px]">{value}</span>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                    <div className="border-t border-gray-200 my-5"></div>
                                 </div>
-                                <div className="border-t border-gray-200 my-5"></div>
-                            </div>
-                        )}
+                            )
+                        }
 
                         {/* Artifacts Section */}
                         <div>
@@ -657,100 +689,104 @@ const ProcessDetails = () => {
                                 })}
                             </div>
                         </div>
-                    </div>
-                </aside>
+                    </div >
+                </aside >
             )}
 
             {/* Center Pane - Extracted Data (when artifact selected) */}
-            {selectedArtifact && (selectedArtifact.data || selectedArtifact.extractedData) && (
-                <div className="w-[300px] border-r border-gray-200 bg-white flex flex-col">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-                        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Extracted Information</h3>
-                    </div>
-                    <div className="p-4 flex-1 overflow-y-auto">
-                        {(() => {
-                            const displayData = selectedArtifact.extractedData || selectedArtifact.data;
-                            if (!displayData) return null;
+            {
+                selectedArtifact && (selectedArtifact.data || selectedArtifact.extractedData) && (
+                    <div className="w-[300px] border-r border-gray-200 bg-white flex flex-col">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+                            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Extracted Information</h3>
+                        </div>
+                        <div className="p-4 flex-1 overflow-y-auto">
+                            {(() => {
+                                const displayData = selectedArtifact.extractedData || selectedArtifact.data;
+                                if (!displayData) return null;
 
-                            if (Array.isArray(displayData)) {
+                                if (Array.isArray(displayData)) {
+                                    return (
+                                        <div className="space-y-3">
+                                            {displayData.map((item, idx) => (
+                                                <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                    {Object.entries(item).map(([key, value]) => (
+                                                        <div key={key} className="flex justify-between text-xs py-1">
+                                                            <span className="text-gray-500">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                            <span className="text-gray-900 font-medium">{value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                }
+
                                 return (
-                                    <div className="space-y-3">
-                                        {displayData.map((item, idx) => (
-                                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                {Object.entries(item).map(([key, value]) => (
-                                                    <div key={key} className="flex justify-between text-xs py-1">
-                                                        <span className="text-gray-500">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                                        <span className="text-gray-900 font-medium">{value}</span>
-                                                    </div>
-                                                ))}
+                                    <div className="space-y-2">
+                                        {Object.entries(displayData || {}).filter(([key]) => !key.includes('video_path') && !key.includes('public_video')).map(([key, value]) => (
+                                            <div key={key} className="flex justify-between text-xs py-2 border-b border-gray-100 last:border-0">
+                                                <span className="text-gray-500 w-2/5">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}</span>
+                                                <span className="text-gray-900 font-medium text-right w-3/5">{value !== null && value !== undefined ? (Array.isArray(value) ? JSON.stringify(value) : value.toString()) : '—'}</span>
                                             </div>
                                         ))}
                                     </div>
                                 );
-                            }
-
-                            return (
-                                <div className="space-y-2">
-                                    {Object.entries(displayData || {}).filter(([key]) => !key.includes('video_path') && !key.includes('public_video')).map(([key, value]) => (
-                                        <div key={key} className="flex justify-between text-xs py-2 border-b border-gray-100 last:border-0">
-                                            <span className="text-gray-500 w-2/5">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}</span>
-                                            <span className="text-gray-900 font-medium text-right w-3/5">{value !== null && value !== undefined ? (Array.isArray(value) ? JSON.stringify(value) : value.toString()) : '—'}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-            )}
-
-            {/* Right Pane - Document Viewer (when artifact selected) */}
-            {selectedArtifact && (
-                <div className="flex-1 min-w-[500px] bg-gray-50 flex flex-col overflow-hidden">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-                        <h3 className="text-sm font-medium text-gray-900">Document</h3>
-                        <div className="flex items-center gap-2">
-                            <button onClick={closeArtifactPanel} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                            })()}
                         </div>
                     </div>
+                )
+            }
 
-                    {/* Document Content */}
-                    <div className="flex-1 overflow-auto p-4">
-                        {selectedArtifact.type === 'video' && selectedArtifact.videoPath && (
-                            <video controls autoPlay className="w-full rounded shadow-sm" src={selectedArtifact.videoPath}>
-                                Your browser does not support the video tag.
-                            </video>
-                        )}
-
-                        {selectedArtifact.type === 'file' && selectedArtifact.pdfPath && (
-                            <iframe
-                                src={selectedArtifact.pdfPath}
-                                className="w-full h-full min-h-[600px] rounded border border-gray-200 bg-white"
-                                title={selectedArtifact.label}
-                            />
-                        )}
-
-                        {selectedArtifact.type === 'image' && selectedArtifact.imagePath && (
-                            <div className="flex justify-center">
-                                <img src={selectedArtifact.imagePath} alt={selectedArtifact.label} className="max-w-full rounded shadow-sm" />
+            {/* Right Pane - Document Viewer (when artifact selected) */}
+            {
+                selectedArtifact && (
+                    <div className="flex-1 min-w-[500px] bg-gray-50 flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+                            <h3 className="text-sm font-medium text-gray-900">Document</h3>
+                            <div className="flex items-center gap-2">
+                                <button onClick={closeArtifactPanel} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                        )}
+                        </div>
 
-                        {selectedArtifact.type === 'table' && selectedArtifact.data && !selectedArtifact.pdfPath && !selectedArtifact.imagePath && (
-                            <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                <h4 className="text-sm font-medium text-gray-900 mb-4">{selectedArtifact.label}</h4>
-                                <div className="text-xs text-gray-500">Data displayed in center panel</div>
-                            </div>
-                        )}
+                        {/* Document Content */}
+                        <div className="flex-1 overflow-auto p-4">
+                            {selectedArtifact.type === 'video' && selectedArtifact.videoPath && (
+                                <video controls autoPlay className="w-full rounded shadow-sm" src={selectedArtifact.videoPath}>
+                                    Your browser does not support the video tag.
+                                </video>
+                            )}
+
+                            {selectedArtifact.type === 'file' && selectedArtifact.pdfPath && (
+                                <iframe
+                                    src={selectedArtifact.pdfPath}
+                                    className="w-full h-full min-h-[600px] rounded border border-gray-200 bg-white"
+                                    title={selectedArtifact.label}
+                                />
+                            )}
+
+                            {selectedArtifact.type === 'image' && selectedArtifact.imagePath && (
+                                <div className="flex justify-center">
+                                    <img src={selectedArtifact.imagePath} alt={selectedArtifact.label} className="max-w-full rounded shadow-sm" />
+                                </div>
+                            )}
+
+                            {selectedArtifact.type === 'table' && selectedArtifact.data && !selectedArtifact.pdfPath && !selectedArtifact.imagePath && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-4">{selectedArtifact.label}</h4>
+                                    <div className="text-xs text-gray-500">Data displayed in center panel</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -175,12 +175,12 @@ export const DUMMY_EMIRATES_ID = {
 };
 
 export const DUMMY_TRADE_LICENSE = {
-  businessName: "Al Rashid Trading LLC",
-  licenseNumber: "TL-2024-123456",
-  issuingAuthority: "Dubai Economic Department",
+  businessName: "Tesla Motors UAE",
+  licenseNumber: "TL-2024-999888",
+  issuingAuthority: "RTA Dubai",
   legalType: "llc" as const,
-  activities: "General Trading, Import & Export",
-  expiryDate: "31/12/2025",
+  activities: "Automotive Retail",
+  expiryDate: "31/12/2026",
 };
 
 export const DUMMY_TRADE_LICENSE_SOLE = {

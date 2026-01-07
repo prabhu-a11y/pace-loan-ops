@@ -14,6 +14,12 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     except ImportError:
         pass
 
+# Ensure values are clean of quotes (common in .env files)
+if SUPABASE_URL: SUPABASE_URL = SUPABASE_URL.strip().strip('"')
+if SUPABASE_KEY: SUPABASE_KEY = SUPABASE_KEY.strip().strip('"')
+
+print(f"DEBUG: Supabase Client initializing with URL: {SUPABASE_URL}")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 def upload_file(file_path: str, bucket: str, destination_path: str):

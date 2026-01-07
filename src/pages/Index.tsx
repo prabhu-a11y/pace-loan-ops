@@ -55,7 +55,7 @@ const initZampProcess = async () => {
     const response = await fetch(`${ZAMP_API_URL}/zamp/init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ processName: "Wio Onboarding Application", team: "Wio Applicant" })
+      body: JSON.stringify({ processName: "Auto Loan Application", team: "Auto Loan Applicant" })
     });
     const data = await response.json();
     return data.processId;
@@ -176,15 +176,13 @@ const AddressInputWrapper = ({
 
 const STEPS: Step[] = [
   { id: 1, label: "Identity", description: "Verification" },
-  { id: 2, label: "Eligibility", description: "Business type" },
-  { id: 3, label: "Documents", description: "Upload & verify" },
-  { id: 4, label: "Authorization", description: "Documents" },
-  { id: 5, label: "Business", description: "Operations" },
-  { id: 6, label: "Financial", description: "Profile" },
-  { id: 7, label: "Review", description: "Submit" },
+  { id: 2, label: "Vehicle", description: "Selection" },
+  { id: 3, label: "Valuation", description: "Assessment" },
+  { id: 4, label: "Financial", description: "Risk Profile" },
+  { id: 5, label: "Review", description: "Final Submit" },
 ];
 
-const WELCOME_MESSAGE = "Welcome to Wio's Intelligent Onboarding platform powered by Pace.\n\nI'm here to help you open your Wio bank account so you can get your business banking up and running in no time!";
+const WELCOME_MESSAGE = "Welcome to ABC Bank's Auto Loan Ops platform powered by Pace.\n\nI'm here to help you with your auto loan application and get you on the road in no time!";
 
 const SCREEN_MESSAGES: Record<ScreenId, { content: string; helperText?: string }> = {
   "0.1": { content: WELCOME_MESSAGE },
@@ -196,12 +194,12 @@ const SCREEN_MESSAGES: Record<ScreenId, { content: string; helperText?: string }
   "1.6": { content: "Let's create a password for your account." },
   "1.7": { content: "Please upload your Emirates ID.", helperText: "We accept PDF, JPG, or PNG files." },
   "1.8": { content: "We extracted the following from your Emirates ID. Please confirm the details are correct:" },
-  "2.1": { content: "What kind of business are you opening an account for?" },
+  "2.1": { content: "To proceed, please select your vehicle type." },
   "2.2": { content: "" },
-  "3.1": { content: "Perfect! To get started, we'll need your Unified license number. Don't have it on hand? You can upload a copy instead." },
-  "3.2": { content: "We extracted the following from your Trade License:" },
-  "3.3": { content: "Please upload your Freelancer Permit.", helperText: "Make sure the permit is valid and not expired." },
-  "3.4": { content: "We extracted the following from your Freelancer Permit:" },
+  "3.1": { content: "Perfect! Please provide your vehicle registration or VIN for collateral valuation." },
+  "3.2": { content: "We retrieved the following valuation details:" },
+  "3.3": { content: "Please upload your vehicle's ownership certificate (Mulkiya).", helperText: "Ensure the scan is clear and all corners are visible." },
+  "3.4": { content: "We extracted the following from your Mulkiya:" },
   "3.5": { content: "", helperText: "" }, // Dynamic - set in getScreenMessage
   "3.5-QA": { content: "" }, // Hidden Q&A step
   "3.6": { content: "", helperText: "" }, // Dynamic - set in getScreenMessage
@@ -212,23 +210,23 @@ const SCREEN_MESSAGES: Record<ScreenId, { content: string; helperText?: string }
   "4.4": { content: "We extracted the following from your POA:" },
   "4.5": { content: "Please upload your Bank Mandate.", helperText: "This document specifies who has signing authority for the account." },
   "4.6": { content: "Please upload your Proof of Address.", helperText: "Accepted: Utility bill, bank statement (within 3 months), or tenancy contract." },
-  "5.1": { content: "Does your business have an online presence (website or social media)?" },
-  "5.2": { content: "What is your website URL?" },
-  "5.2A": { content: "We found the following information from your website. Please confirm:" },
-  "5.3": { content: "Does your business operate in countries outside the UAE?" },
-  "5.4": { content: "Which countries do you operate in?" },
-  "5.5": { content: "Do you have a branch or physical presence in these countries?" },
-  "5.6": { content: "Do you have a physical business address in the UAE?" },
-  "5.7": { content: "What is your business address?" },
+  "5.1": { content: "Will this vehicle be used for commercial purposes?" },
+  "5.2": { content: "Please provide a link to your business website (if applicable)." },
+  "5.2A": { content: "We retrieved the following from your website. Please confirm:" },
+  "5.3": { content: "Do you intend to take this vehicle outside the UAE?" },
+  "5.4": { content: "Which countries do you plan to travel to?" },
+  "5.5": { content: "Do you have international insurance coverage?" },
+  "5.6": { content: "Do you have a physical residence address in the UAE?" },
+  "5.7": { content: "What is your current residential address?" },
   "5.7A": { content: "We successfully verified your address." },
-  "5.8": { content: "For verifying your Legal Entity Identifier (LEI). Please provide your 20-character LEI code." },
-  "5.8A": { content: "We extracted the following LEI details. Please confirm:" },
-  "6.1": { content: "What is your expected annual turnover?" },
-  "6.2": { content: "What are your main sources of funds?" },
-  "6.3": { content: "What is your expected monthly deposit volume?" },
-  "6.4": { content: "What is your expected monthly withdrawal volume?" },
-  "6.5": { content: "What percentage of your deposits will be in cash?" },
-  "6.6": { content: "What percentage of your withdrawals will be in cash?" },
+  "5.8": { content: "To verify your employment, please enter your employer's LEI or Trade License number." },
+  "5.8A": { content: "We retrieved the following employer details. Please confirm:" },
+  "6.1": { content: "What is your monthly salary/income?" },
+  "6.2": { content: "What are your primary sources of income?" },
+  "6.3": { content: "What is your expected monthly loan repayment capacity?" },
+  "6.4": { content: "What is your current monthly debt obligation?" },
+  "6.5": { content: "What percentage of your salary is received in cash?" },
+  "6.6": { content: "What percentage of your monthly expenses are paid in cash?" },
   "6.7": { content: "Based on what you've told us, here's what we think you'll need:" },
   "6.8": { content: "Based on your business profile, here's the plan we recommend:" },
   "7.1": { content: "Please review all the information you've provided:" },
@@ -334,7 +332,7 @@ const GetStartedScreen = ({ onStart }: { onStart: () => void }) => {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to Wio Onboarding</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Welcome to ABC Bank Auto Loan Ops</h1>
         <p className="text-gray-500">Fast, digital, and seamless business account opening.</p>
       </div>
       <button
@@ -477,15 +475,15 @@ const Index = () => {
     setZampProcessId(pid);
     if (pid) {
       await logToZamp(pid, {
-        title: "Wio Onboarding Application started",
+        title: "Auto Loan Application started",
         status: "completed",
         type: "success"
       }, undefined, { status: "processing" }); // Update keyDetails status
       await logToZamp(pid, {
-        title: "Identity Verification in Progress",
+        title: "Borrower application & pre-approval in Progress",
         status: "processing",
         type: "info"
-      }, "identity-verification"); // Use stepId
+      }, "borrower-preapproval"); // Use stepId
     }
     goToNextScreen();
   };
@@ -495,11 +493,12 @@ const Index = () => {
     if (currentScreen === "2.1" && zampProcessId) {
       // Dynamic Zamp Logging for Step Completion (Initial Logs)
       // Eligibility Start
+      // Vehicle identification Start
       logToZamp(zampProcessId, {
-        title: "Eligibility Verification in Progress",
+        title: "Vehicle identification & collateral validation in Progress",
         status: "processing",
         type: "info"
-      }, "eligibility-verification");
+      }, "vehicle-validation");
     }
   }, [currentScreen, zampProcessId]); // Dependencies: only run when screen changes to 2.1
 
@@ -704,13 +703,13 @@ const Index = () => {
     addUserMessage("Details confirmed.");
     if (zampProcessId) {
       await logToZamp(zampProcessId, {
-        title: "Identity verification complete",
+        title: "Borrower application & pre-approval complete",
         status: "success",
         type: "success",
         artifacts: [
-          { type: "image", label: "Emirates ID Image", icon: "image", imagePath: await uploadToZamp(data.emiratesId.file!), id: `art-eid-${Date.now()}` },
+          { type: "image", label: "Borrower ID Image", icon: "image", imagePath: await uploadToZamp(data.emiratesId.file!), id: `art-eid-${Date.now()}` },
           {
-            type: "table", label: "Extracted Identity Data", icon: "table", data: {
+            type: "table", label: "Extracted Borrower Data", icon: "table", data: {
               "Entered Name": data.fullName,
               "Phone Number": data.phone,
               "Email Address": data.email,
@@ -722,7 +721,7 @@ const Index = () => {
             }, id: `art-eid-data-${Date.now()}`
           }
         ]
-      }, "identity-verification"); // Update the "In Progress" step
+      }, "borrower-preapproval"); // Update the "In Progress" step
     }
     goToNextScreen();
   };

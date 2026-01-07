@@ -6,7 +6,7 @@ create table if not exists processes (
     id uuid default uuid_generate_v4() primary key,
     process_name text not null,
     team text,
-    applicant_name text default 'Wio Applicant',
+    applicant_name text default 'ABC Bank Applicant',
     stock_id text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null,

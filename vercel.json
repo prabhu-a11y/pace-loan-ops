@@ -1,0 +1,12 @@
+{
+    "rewrite": [
+        {
+            "source": "/api/(.*)",
+            "destination": "src/server_api.py"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

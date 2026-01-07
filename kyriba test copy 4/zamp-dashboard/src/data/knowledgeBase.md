@@ -1,206 +1,143 @@
-# Wio Bank Onboarding Process Documentation
-
-## Overview
-This document outlines the end-to-end automated onboarding process for Wio Bank's business account applications, integrated with Zamp Dashboard for real-time process monitoring and case management.
-
-## Process Flow
-
-### 1. Application Initiation
-**Wio Dashboard:** User lands on welcome page and clicks "Get Started" button
-
-**Zamp Dashboard Action:**
-- New process ID is created automatically
-- Case appears in "In Progress" bucket
-- Status: "Wio Onboarding Application started"
-- All form data saved to JSON in public folder
-- All uploaded files saved with case ID reference
+# AUTO LOAN OPERATIONS – STANDARD OPERATING PROCEDURE
+## End-to-End Loan Processing Workflow (US Banks)
 
 ---
 
-### 2. Identity Verification
-**Wio Dashboard:** User provides identity information and uploads Emirates ID
+## 1. PURPOSE OF THIS SOP
+This document outlines the end-to-end operational process followed when a customer applies for an Auto Loan, covering:
+- Application intake
+- Verification and validation checks
+- Credit and collateral evaluation
+- Decisioning and pricing
+- Approval, rejection, booking, and funding
+- Post-funding compliance and audit
 
-**Required Information:**
-- Full Name
-- Email Address
-- Mobile Number
-- Emirates ID (image upload)
-- Details extracted from Emirates ID
-
-**Zamp Dashboard Action:**
-- Status: "Identity Verification in Progress"
-- Upon completion: "Identity Verification Complete"
-- **Artifacts Generated:**
-  - Data table with all identity fields and values
-  - Emirates ID image (popup modal)
+**This SOP is designed to ensure:**
+- Consistent decision-making
+- Compliance with regulatory requirements
+- Operational accuracy
+- Audit readiness
 
 ---
 
-### 3. Eligibility Verification
-**Wio Dashboard:** User selects their business documentation type and confirms industry eligibility
-
-**User Selections:**
-- "I have a Trade License" OR "I have a Freelance Permit"
-- Confirmation: Not in restricted industries
-
-**Zamp Dashboard Action:**
-- Status: "Eligibility Verification in Progress"
-- Upon confirmation: "Confirmed - not in restricted industries"
-- Upon completion: "Eligibility Verification Complete"
-- Message displays: "User has a {License Type} and is not in any restricted Industries"
+## 2. SCOPE
+This SOP applies to:
+- Direct and indirect auto loans
+- Retail consumer auto financing
+- Loans originated through dealers or bank channels
 
 ---
 
-### 4. Document Verification
-**Wio Dashboard:** User provides license information for verification
-
-**Input Options:**
-- Trade License Number (for browser automation lookup)
-- Trade License Upload (for OCR extraction)
-- Freelance Permit Upload (for OCR extraction)
-
-**Zamp Dashboard Action:**
-- Status: "Verifying Documents"
-- Upon completion: "Document Verification Complete"
-- Message displays: "Applicant's Legal Type is {Legal Type}"
-- **Artifacts Generated:**
-  - For License Number: Browser agent video + extracted data table
-  - For Document Upload: Uploaded image + extracted data table
-
-**Key Field Extracted:** Legal Type (determines subsequent requirements)
+## 3. OVERALL PROCESS FLOW
+The auto loan process is divided into four major stages:
+1. **Borrower Application & Pre-Approval**
+2. **Vehicle Identification & Collateral Validation**
+3. **Credit Decisioning, Pricing & Communication**
+4. **Loan Booking, Funding & Audit**
 
 ---
 
-### 5. Authority Verification
-**Wio Dashboard:** User uploads required authority documents based on legal structure
+### STAGE 1: BORROWER APPLICATION & PRE-APPROVAL
 
-**Document Requirements:**
+#### Step 1: Application Intake & Data Capture
+**Objective:** Capture and standardize all borrower application data required to initiate loan processing.
+**Actions Performed:**
+- Receive application from borrower or dealer
+- Capture borrower details: Full legal name, DOB, Address, Employment, Income.
+- Assign a unique application reference number.
+- Normalize data formats (dates, addresses, numeric fields).
 
-**For Sole Proprietor:**
-- Additional documents as required
+**Key Checks:** Mandatory fields completeness, valid data formats, duplicate application detection.
+**Outcome:** Application accepted OR flagged for missing/invalid information.
 
-**For LLC:**
-- Additional documents as required
+#### Step 2: Eligibility Pre-Check
+**Objective:** Ensure the applicant meets basic eligibility requirements before deeper evaluation.
+**Rules Applied:** Minimum legal age, State-level lending eligibility, Employment and residency requirements.
+**Outcome:** Eligible → proceed | Ineligible → application declined with reason.
 
-**Zamp Dashboard Action:**
-- Status: "Authority Verification Pending"
-- Upon completion: "Authority Verification Complete"
-- **Artifacts Generated:**
-  - All uploaded documents as clickable popup modals
-  - Documents stored with case ID reference in backend
+#### Step 3: Identity & Fraud Verification
+**Objective:** Verify borrower identity and screen for fraud and sanctions risk.
+**Checks Performed:**
+- Identity verification using provided documents.
+- Cross-verification of paystubs and bank statements.
+- OFAC sanctions screening.
+- Fraud risk indicators review.
 
----
+**Decision Rules:** Positive sanctions match → automatic rejection | Identity mismatch or high fraud risk → refer for review.
+**Outcome:** Identity verified OR additional documentation requested OR application rejected.
 
-### 6. Business Verification
-**Wio Dashboard:** User provides comprehensive business information
+#### Step 4: Credit Data Retrieval
+**Objective:** Establish borrower creditworthiness using bureau data.
+**Actions Performed:** Retrieve credit report, extract applicable FICO score, review tradelines and delinquency history.
+**Outcome:** Credit profile established OR application referred.
 
-**Required Information:**
-- Business Website
-- International Operations (Yes/No + Countries)
-- UAE Address
-
-**Zamp Dashboard Action:**
-- Status: "Business Verification in Progress"
-- Upon completion: "Business Verification Complete"
-- **Artifacts Generated:**
-  - Data table with all business details fields and values
-
----
-
-### 7. Financial Profiling
-**Wio Dashboard:** User completes financial profile and selects banking products
-
-**Financial Information:**
-- Annual Turnover (range selection)
-- Monthly Deposits (range selection)
-- Monthly Withdrawals (range selection)
-- Cash Deposits (percentage)
-- Cash Withdrawals (percentage)
-
-**Product Selection:**
-- Local transfers
-- International transfers
-- Multiuser & team access
-- Online payment gateway
-- Invoice management
-- Credit card
-
-**Plan Selection:**
-- Selected plan name (e.g., "Grow Plan")
-- Monthly price
-
-**Zamp Dashboard Action:**
-- Status: "Financial Profiling in Progress"
-- Upon completion: "Financial Profiling Complete"
-- **Artifacts Generated:**
-  - Comprehensive data table with all financial profile fields, selected products, and plan details
+#### Step 5: Conditional Pre-Approval Assessment
+**Objective:** Determine an indicative loan offer based on borrower affordability.
+**Calculations:** Debt-to-Income (DTI), Payment-to-Income (PTI), Credit utilization.
+**Rules Applied:** Maximum DTI thresholds, Product-specific affordability limits.
+**Outcome:** Conditional pre-approval issued OR application referred/declined.
 
 ---
 
-### 8. Review and Submission
-**Wio Dashboard:** User reviews all provided information and submits application
+### STAGE 2: VEHICLE IDENTIFICATION & COLLATERAL VALIDATION
 
-**Zamp Dashboard Action:**
-- Status: "Review Pending"
-- Upon submission: "Review Complete. Application submitted successfully with reference number {Reference Number}"
-- Case moves from "In Progress" to "Done" bucket
+#### Step 6: Vehicle Identification
+**Objective:** Validate vehicle details proposed as loan collateral using VIN.
+**Outcome:** Vehicle profile created OR vehicle data flagged for mismatch.
 
----
+#### Step 7: Collateral Eligibility Review
+**Objective:** Ensure the vehicle meets collateral policy requirements (Age, Mileage, Title criteria).
+**Outcome:** Collateral approved OR application referred/declined.
 
-## Technical Architecture
-
-### Data Flow
-1. **Wio Dashboard** → User inputs and interactions
-2. **Backend Server** → Processes data, creates process IDs, manages state
-3. **Zamp Dashboard** → Real-time monitoring, artifact display, case management
-
-### Data Storage
-- **Form Data:** Saved as JSON in public folder of zamp-dashboard
-- **Uploaded Files:** Saved in backend with case ID numbering
-- **Artifacts:** Referenced from public folder for popup modals
-
-### Real-Time Integration
-- Process ID created immediately upon "Get Started" click
-- All status updates reflected in real-time on Zamp Dashboard
-- Log entries appear top-to-bottom chronologically
-- Artifacts appear in Key Details panel artifact list
+#### Step 8: Vehicle Valuation & Loan-to-Value (LTV) Calculation
+**Objective:** Assess collateral value and exposure risk.
+**Actions Performed:** Retrieve industry valuations, normalize based on condition, calculate LTV ratio.
+**Rules Applied:** Maximum allowable LTV thresholds.
+**Outcome:** Collateral valuation accepted OR loan terms adjusted/declined.
 
 ---
 
-## Process States
+### STAGE 3: DECISIONING, PRICING & COMMUNICATION
 
-### In Progress
-- Application started through Financial Profiling Complete
+#### Step 9: Credit Risk Assessment
+**Objective:** Assess overall credit risk using internal risk models (Expected Loss, Risk Grade).
 
-### Done
-- Review Complete and Application Submitted
+#### Step 10: Credit Policy Decisioning
+**Objective:** Arrive at a final loan decision (Approve, Counter-offer, Decline, Refer).
 
----
+#### Step 11: Risk-Based Pricing
+**Objective:** Determine final loan pricing (Interest rate, Loan term) based on approved risk tier.
 
-## Artifacts Summary
-
-Throughout the process, the following artifacts are generated and accessible via popup modals:
-
-1. **Identity Verification:** Identity data table + Emirates ID image
-2. **Document Verification:** License/permit image + extracted data table OR browser video + extracted data table
-3. **Authority Verification:** All uploaded authority documents (clickable modals)
-4. **Business Verification:** Business details data table
-5. **Financial Profiling:** Financial profile + products + plan data table
-
-All artifacts are listed in the Key Details panel on the Zamp Dashboard for easy access and reference.
+#### Step 12: Customer Communication & Stipulations
+**Objective:** Issue notification, provide disclosures, and list required stipulations (Insurance, Docs).
 
 ---
 
-## Integration Points
+### STAGE 4: LOAN BOOKING, FUNDING & AUDIT
 
-### Wio Dashboard → Zamp Dashboard
-- Process initiation triggers case creation
-- Each form completion triggers status update
-- File uploads saved with case ID reference
-- Application submission triggers case completion
+#### Step 13: Document Collection & Verification
+**Objective:** Final review of Retail Installment Contract, Insurance, Title application, and Odometer disclosure.
 
-### Key Integration Components
-- Process ID generation and tracking
-- Real-time status synchronization
-- Artifact modal system
-- Case state management (In Progress → Done)
+#### Step 14: Loan Booking & Funding
+**Objective:** Finalize loan in OS, execute e-signatures, and disburse funds to dealer/seller.
+
+#### Step 15: Post-Funding Monitoring
+**Objective:** Monitor title receipt confirmation, insurance validity, and SLA adherence.
+
+#### Step 16: Final Reconciliation & Audit
+**Objective:** Re-screen sanctions, reconcile funding, compile complete loan case file, and archive records.
+
+---
+
+## 4. FINAL OUTCOMES
+1. **Approved & Funded**
+2. **Approved but Withdrawn**
+3. **Declined**
+4. **Cancelled**
+
+---
+
+## 5. GOVERNANCE & OVERSIGHT
+- All steps are logged for absolute auditability.
+- Exceptions require documented supervisor approval.
+- Policy updates are version-controlled and regulator-safe.

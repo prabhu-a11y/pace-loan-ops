@@ -74,7 +74,7 @@ const DashboardLayout = () => {
                                 }
                             >
                                 <img src="/random.svg" alt="process icon" className="w-6.5 h-6.5 mr-2.5" />
-                                Client Onboarding
+                                Auto Loan Ops
                             </NavLink>
                         </div>
 
@@ -96,9 +96,9 @@ const DashboardLayout = () => {
                         >
                             <div className="flex items-center">
                                 <div className="w-5 h-5 bg-pink-200 rounded text-[10px] flex items-center justify-center text-pink-700 font-bold mr-2.5">
-                                    W
+                                    A
                                 </div>
-                                Wio
+                                ABC Bank
                             </div>
                             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isAirbnbOpen ? 'rotate-180' : ''}`} />
                         </button>
@@ -112,9 +112,9 @@ const DashboardLayout = () => {
                                         onClick={() => setIsAirbnbOpen(false)}
                                     >
                                         <div className="w-5 h-5 bg-pink-200 rounded text-[10px] flex items-center justify-center text-pink-700 font-bold mr-2.5">
-                                            W
+                                            A
                                         </div>
-                                        Wio
+                                        ABC Bank
                                     </button>
                                     <div className="border-t border-gray-100 my-1"></div>
                                     <button
@@ -154,13 +154,13 @@ const DashboardLayout = () => {
                                     >
                                         <ArrowLeft className="w-3.5 h-3.5 text-gray-500" />
                                     </button>
-                                    <span className="text-gray-500">Client Onboarding</span>
+                                    <span className="text-gray-500">Auto Loan Ops</span>
                                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                                     <span className="text-gray-900 font-medium">Activity Logs</span>
                                 </>
                             )}
                             {!isProcessDetailPage && (
-                                <span className="text-gray-900 font-medium">Client Onboarding</span>
+                                <span className="text-gray-900 font-medium">Auto Loan Ops</span>
                             )}
                         </div>
                     </div>

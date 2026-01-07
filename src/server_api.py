@@ -25,7 +25,7 @@ from browser import extract_license_info
 from browser_lei import extract_lei_info
 from browser2 import extract_website_data
 import google.generativeai as genai
-from supabase_config import supabase, upload_file
+from supabase_config import supabase, upload_file, SUPABASE_URL
 
 
 # Configure Gemini
@@ -439,6 +439,243 @@ async def approve_application(processId: str):
         
         return {"status": "success"}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/zamp/processes")
+async def get_all_processes():
+    try:
+        res = supabase.table("processes").select("*").order("created_at", desc=True).execute()
+        # Map camelCase for frontend compatibility if needed
+        # In processes table we have applicant_name, stock_id etc.
+        processes = []
+        for p in res.data:
+            processes.append({
+                "id": p["id"],
+                "stockId": p.get("stock_id"),
+                "applicantName": p.get("applicant_name"),
+                "name": p.get("applicant_name"), # fallback
+                "year": p.get("year"),
+                "status": p.get("status")
+            })
+        return processes
+    except Exception as e:
+        print(f"Error fetching processes: {e}")
+        return []
+
+@app.get("/zamp/process/{processId}")
+async def get_process_detail(processId: str):
+    try:
+        # Fetch metadata
+        res_meta = supabase.table("processes").select("*").eq("id", processId).execute()
+        if not res_meta.data:
+             raise HTTPException(status_code=404, detail="Process not found")
+        
+        meta = res_meta.data[0]
+        
+        # Fetch sections
+        res_sections = supabase.table("process_sections").select("*").eq("process_id", processId).execute()
+        
+        sections = {}
+        for s in res_sections.data:
+            sections[s["section_name"]] = {
+                "title": s["title"],
+                "items": json.loads(s["content"]) if s["section_name"] != "overview" else s["content"]
+            }
+            # Special handling for overview if it's stored differently
+            if s["section_name"] == "overview":
+                 try:
+                     sections[s["section_name"]]["content"] = json.loads(s["content"])
+                 except:
+                     sections[s["section_name"]]["content"] = s["content"]
+
+        return {
+            "id": meta["id"],
+            "applicantName": meta.get("applicant_name"),
+            "status": meta.get("status"),
+            "sections": sections
+        }
+    except Exception as e:
+        print(f"Error fetching process detail: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class HITLActionRequest(BaseModel):
+    processId: str
+    actionId: str
+    logId: str
+
+@app.post("/zamp/hitl-action")
+async def hitl_action(request: HITLActionRequest):
+    try:
+        # Fetch activity logs
+        res = supabase.table("process_sections").select("content").eq("process_id", request.processId).eq("section_name", "activityLogs").execute()
+        logs = json.loads(res.data[0]["content"]) if res.data else []
+        
+        # Find the log and update its status
+        for log in logs:
+            if log.get("id") == request.logId:
+                log["status"] = "success"
+                log["title"] = f"Action Completed: {request.actionId.replace('-', ' ').title()}"
+                # Remove HITL actions after completion
+                if "hitlActions" in log:
+                    del log["hitlActions"]
+                break
+        
+        # Save updated logs
+        supabase.table("process_sections").update({"content": json.dumps(logs)}).eq("process_id", request.processId).eq("section_name", "activityLogs").execute()
+        
+        return {"status": "success"}
+    except Exception as e:
+        print(f"Error handling HITL action: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/zamp/seed-auto-loan/{processId}")
+async def seed_auto_loan(processId: str):
+    try:
+        # Define high-fidelity logs for Auto Loan Ops Journey
+        logs = [
+            {
+                "id": "log-1",
+                "title": "Borrower Identity & KYC Verified",
+                "status": "success",
+                "time": "10:00 AM",
+                "reasoning": ["Emirates ID scan matches facial biometrics", "No AML hits found in World-Check"],
+                "artifacts": [{"id": "art-eid", "label": "Emirates ID Scan", "icon": "file", "type": "image", "imagePath": "https://placehold.co/400x300?text=Emirates+ID"}]
+            },
+            {
+                "id": "log-2",
+                "title": "Vehicle Collateral Valuation",
+                "status": "success",
+                "time": "11:30 AM",
+                "reasoning": ["Market value AED 120,000", "LTV ratio (80%) is within policy limits"],
+                "artifacts": [{"id": "art-val", "label": "Valuation Report", "icon": "file", "type": "file", "pdfPath": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}]
+            },
+            {
+                "id": "log-3",
+                "title": "Collateral Inspection in Progress",
+                "status": "processing",
+                "time": "01:45 PM",
+                "reasoning": ["Physical inspection scheduled at Tasjeel"],
+                "artifacts": []
+            },
+            {
+                "id": "log-4",
+                "title": "Income & Employment Verification",
+                "status": "processing",
+                "time": "02:00 PM",
+                "reasoning": ["Fetching salary certificates from UAE PASS"],
+                "artifacts": []
+            },
+            {
+                "id": "log-5",
+                "title": "Interest Rate Approval Required",
+                "status": "needs_attention",
+                "time": "02:30 PM",
+                "reasoning": ["Requested rate (3.5%) is below standard tier (3.9%)", "Customer has high credit score of 780"],
+                "hitlActions": [
+                    {"id": "approve-rate", "label": "Approve 3.5% Rate", "primary": True},
+                    {"id": "counter-offer", "label": "Counter with 3.7%", "primary": False}
+                ],
+                "artifacts": [{"id": "art-credit", "label": "AECB Credit Report", "icon": "table", "type": "table", "data": {"Score": 780, "Defaults": 0}}]
+            },
+            {
+                "id": "log-6",
+                "title": "Potential AML Conflict: Secondary Hit",
+                "status": "needs_attention",
+                "time": "02:45 PM",
+                "reasoning": ["Name match on 'John Doe' in restricted list", "Date of birth mismatch (1985 vs 1990)"],
+                "hitlActions": [
+                    {"id": "dismiss-hit", "label": "Dismiss False Positive", "primary": True},
+                    {"id": "escalate", "label": "Escalate to Compliance", "primary": False}
+                ],
+                "artifacts": [{"id": "art-aml", "label": "AML Matching Details", "icon": "table", "type": "table", "data": {"Match Confidence": "85%", "List Name": "OFAC SDN"}}]
+            }
+        ]
+        
+        # Save logs to process_sections
+        supabase.table("process_sections").update({"content": json.dumps(logs)}).eq("process_id", processId).eq("section_name", "activityLogs").execute()
+        
+        # Update metadata
+        supabase.table("processes").update({"status": "Needs Review", "applicant_name": "Hamdan Rashid"}).eq("id", processId).execute()
+        
+        return {"status": "seeded"}
+    except Exception as e:
+        print(f"Error seeding data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/zamp/processes")
+async def zamp_processes():
+    try:
+        res = supabase.table("processes").select("*").order("created_at", desc=True).execute()
+        return res.data
+    except Exception as e:
+        print(f"Error fetching processes: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.post("/zamp/seed-demo-data")
+async def seed_demo_data():
+    try:
+        from uuid import uuid4
+        print(f"DEBUG: Seeding to Supabase URL: {SUPABASE_URL}")
+        
+        # 1. Hamdan Rashid - Needs Attention (Red)
+        hamdan_id = str(uuid4())
+        supabase.table("processes").insert({
+            "id": hamdan_id,
+            "process_name": "Auto Loan Application",
+            "applicant_name": "Hamdan Rashid",
+            "status": "Needs Review",
+            "year": "2024-01-07"
+        }).execute()
+        
+        hamdan_logs = [
+            {"id": str(uuid4()), "title": "Application Started", "status": "success", "time": "09:00 AM", "reasoning": ["User selected Auto Loan Ops flow"]},
+            {"id": str(uuid4()), "title": "Identity Verification", "status": "success", "time": "09:15 AM", "reasoning": ["EID Verified"], "artifacts": [{"id": "h-art1", "label": "EID Scan", "icon": "file", "type": "image", "imagePath": "https://placehold.co/400x300?text=Hamdan+EID"}]},
+            {"id": str(uuid4()), "title": "Interest Rate Review", "status": "needs_attention", "time": "10:30 AM", "reasoning": ["Flagged: Manual override requested for 3.2% rate"], "hitlActions": [{"id": "app-rate", "label": "Approve 3.2%", "primary": True}, {"id": "reject-rate", "label": "Stick to 3.5%", "primary": False}]}
+        ]
+        supabase.table("process_sections").insert([
+            {"process_id": hamdan_id, "section_name": "activityLogs", "content": json.dumps(hamdan_logs)},
+            {"process_id": hamdan_id, "section_name": "keyDetails", "content": json.dumps({"Loan Amount": "AED 250,000", "Credit Score": "740"})}
+        ]).execute()
+
+        # 2. Fatima Al Mansouri - In Progress (Blue)
+        fatima_id = str(uuid4())
+        supabase.table("processes").insert({
+            "id": fatima_id,
+            "process_name": "Auto Loan Application",
+            "applicant_name": "Fatima Al Mansouri",
+            "status": "In Progress",
+            "year": "2024-01-07"
+        }).execute()
+        
+        fatima_logs = [
+            {"id": str(uuid4()), "title": "KYC Verified", "status": "success", "time": "11:00 AM", "reasoning": ["Biometrics match"]},
+            {"id": str(uuid4()), "title": "Collateral Valuation", "status": "processing", "time": "01:00 PM", "reasoning": ["Agent dispatched to dealer location"], "artifacts": []}
+        ]
+        supabase.table("process_sections").insert([
+            {"process_id": fatima_id, "section_name": "activityLogs", "content": json.dumps(fatima_logs)}
+        ]).execute()
+
+        # 3. Omar Hassan - Done (Green)
+        omar_id = str(uuid4())
+        supabase.table("processes").insert({
+            "id": omar_id,
+            "process_name": "Auto Loan Application",
+            "applicant_name": "Omar Hassan",
+            "status": "Done",
+            "year": "2024-01-06"
+        }).execute()
+        
+        omar_logs = [
+            {"id": str(uuid4()), "title": "Valuation Complete", "status": "success", "time": "Yesterday", "reasoning": ["Vehicle value: AED 180k"], "artifacts": [{"id": "o-art1", "label": "Valuation Report", "icon": "file", "type": "file", "pdfPath": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}]},
+            {"id": str(uuid4()), "title": "Funds Disbursed", "status": "success", "time": "Yesterday", "reasoning": ["AED 150,000 sent to Tesla Motors UAE"]}
+        ]
+        supabase.table("process_sections").insert([
+            {"process_id": omar_id, "section_name": "activityLogs", "content": json.dumps(omar_logs)}
+        ]).execute()
+
+        return {"status": "Demo data seeded successfully"}
+    except Exception as e:
+        print(f"Error seeding demo data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

@@ -1,15 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Filter, Check, Loader2 } from 'lucide-react';
-import processesData from '../data/processes.json';
+// import processesData from '../data/processes.json';
 
 const ProcessList = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Done');
+    const [processes, setProcesses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const ZAMP_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+    React.useEffect(() => {
+        const fetchProcesses = async () => {
+            try {
+                const response = await fetch(`${ZAMP_API_URL}/zamp/processes`);
+                const data = await response.json();
+                setProcesses(data);
+            } catch (error) {
+                console.error("Error fetching processes:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProcesses();
+    }, []);
 
     // Filter processes based on active tab
     const getProcessesByStatus = (status) => {
-        return processesData.filter(p => p.status === status);
+        return processes.filter(p => p.status === status);
     };
 
     const tabs = [
@@ -175,7 +194,7 @@ const ProcessList = () => {
                                         </td>
 
                                         <td className="px-4 py-2 text-xs text-gray-900 text-left">
-                                            Wio Onboarding Application
+                                            Auto Loan Application
                                         </td>
 
                                         <td className="px-4 py-2 whitespace-nowrap text-center text-xs text-gray-900">
@@ -183,7 +202,7 @@ const ProcessList = () => {
                                         </td>
 
                                         <td className="px-4 py-2 whitespace-nowrap text-left">
-                                            <span className="text-xs text-gray-900 font-medium">{process.customerName || process.applicantName || process.name || "Wio Applicant"}</span>
+                                            <span className="text-xs text-gray-900 font-medium">{process.customerName || process.applicantName || process.name || "Auto Loan Applicant"}</span>
                                         </td>
 
                                         <td className="px-4 py-2 whitespace-nowrap text-left">
