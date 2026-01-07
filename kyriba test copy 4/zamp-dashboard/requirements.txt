@@ -1,0 +1,7 @@
+fastapi
+supabase
+python-dotenv
+google-generativeai
+pydantic
+playwright
+playwright-stealth
